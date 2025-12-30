@@ -1,0 +1,417 @@
+:root {
+    --corp-dark: #0f172a;       
+    --corp-primary: #3b82f6;    
+    --corp-accent: #6366f1;     
+    --corp-light: #f8fafc;
+    --text-main: #334155;
+    --sidebar-w: 280px;
+    --male-bg: #eff6ff; --male-col: #1d4ed8;
+    --fem-bg: #fdf2f8; --fem-col: #be185d;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: var(--corp-light);
+    color: var(--text-main);
+    overflow-x: hidden;
+    margin: 0;
+}
+
+/* --- UI COMPONENT: GENDER CARDS (VERSIÓN COMPACTA) --- */
+.gender-selector-container { 
+    display: flex; 
+    gap: 10px; /* Menos separación entre botones */
+}
+
+.gender-card {
+    flex: 1; 
+    border: 1px solid #e2e8f0; /* Borde más fino */
+    border-radius: 12px; /* Curva más cerrada acorde al tamaño */
+    padding: 8px 5px; /* Relleno reducido significativamente */
+    text-align: center; 
+    cursor: pointer; 
+    transition: all 0.2s ease; 
+    background: white;
+    position: relative; 
+    overflow: hidden;
+    opacity: 0.7;
+}
+
+/* Hover suave */
+.gender-card:hover { 
+    opacity: 1; 
+    border-color: #cbd5e1;
+    background: #f8fafc;
+}
+
+/* --- ESTILO VARÓN (AZUL) --- */
+#cardMale.selected {
+    border-color: #2563eb;
+    background: #eff6ff; /* Azul muy clarito plano para que se vea limpio */
+    box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2); /* Sombra sutil */
+    opacity: 1;
+}
+#cardMale.selected svg { 
+    fill: #2563eb; 
+}
+#cardMale.selected span { 
+    color: #2563eb; 
+    font-weight: 800;
+}
+
+/* --- ESTILO MUJER (ROSADO) --- */
+#cardFemale.selected {
+    border-color: #db2777;
+    background: #fdf2f8; /* Rosado muy clarito plano */
+    box-shadow: 0 2px 5px rgba(219, 39, 119, 0.2);
+    opacity: 1;
+}
+#cardFemale.selected svg { 
+    fill: #db2777; 
+}
+#cardFemale.selected span { 
+    color: #db2777; 
+    font-weight: 800;
+}
+
+/* Elementos internos reducidos */
+.gender-card svg { 
+    width: 24px; /* Icono pequeño (antes era 45px) */
+    height: 24px; 
+    margin-bottom: 2px; 
+    fill: #94a3b8; 
+    transition: fill 0.2s; 
+}
+.gender-card span { 
+    display: block; 
+    font-weight: 600; 
+    font-size: 0.75rem; /* Letra pequeña (12px aprox) */
+    color: #94a3b8; 
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.gender-radio { 
+    position: absolute; 
+    opacity: 0; 
+    cursor: pointer; 
+}
+
+/* --- UI COMPONENT: SEARCH DROPDOWN --- */
+.search-dropdown-wrapper { position: relative; }
+.search-suggestions {
+    position: absolute; top: 100%; left: 0; width: 100%;
+    background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+    z-index: 1050; max-height: 200px; overflow-y: auto;
+    display: none; margin-top: 5px;
+}
+.search-suggestions.active { display: block; }
+.suggestion-item {
+    padding: 12px 20px; cursor: pointer; border-bottom: 1px solid #f1f5f9;
+    display: flex; align-items: center; gap: 10px; transition: background 0.2s;
+}
+.suggestion-item:hover { background: #f8fafc; }
+.s-avatar {
+    width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: bold;
+}
+
+/* --- NOTIFICACIONES & VOUCHER --- */
+body.swal2-toast-shown .swal2-container.swal2-top-end { top: 20px !important; right: 20px !important; }
+.colored-toast { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1) !important; }
+.voucher-modal-container { background: #f8fafc; border-radius: 20px; overflow: hidden; }
+.voucher-img-frame { border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; margin-bottom: 15px; }
+
+
+
+/* --- SPLASH & LOGIN (PREMIUM) --- */
+#splashScreen {
+    position: fixed; inset: 0; background: var(--corp-dark); z-index: 10000;
+    display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.8s;
+}
+.splash-loader {
+    width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.1);
+    border-left-color: var(--corp-primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+#loginOverlay {
+    position: fixed; inset: 0; 
+    background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); /* Fondo oscuro profundo */
+    z-index: 9000; display: flex; justify-content: center; align-items: center;
+    opacity: 0; visibility: hidden; transition: all 0.5s;
+}
+#loginOverlay.active { opacity: 1; visibility: visible; }
+
+.login-card-pro {
+    background: #ffffff; /* Tarjeta Blanca para contraste profesional */
+    width: 100%; max-width: 380px;
+    padding: 45px 35px; 
+    border-radius: 24px; 
+    text-align: center;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); /* Sombra de elevación */
+    transform: translateY(20px); transition: transform 0.4s;
+    position: relative;
+    overflow: hidden;
+}
+/* Barra de color decorativa arriba */
+.login-card-pro::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px;
+    background: linear-gradient(90deg, var(--corp-primary), var(--corp-accent));
+}
+
+#loginOverlay.active .login-card-pro { transform: translateY(0); }
+
+/* Inputs Modernos con Icono */
+.login-input-group {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 15px;
+    display: flex; align-items: center;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+}
+.login-input-group:focus-within {
+    border-color: var(--corp-primary);
+    background: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    transform: translateY(-1px);
+}
+.login-input-group i {
+    color: #94a3b8; font-size: 1.2rem; margin-right: 15px;
+}
+.login-input-field {
+    border: none; outline: none; width: 100%;
+    color: #334155; font-weight: 600; background: transparent;
+    font-size: 0.95rem;
+}
+.login-input-field::placeholder { color: #cbd5e1; font-weight: 500; }
+
+.btn-login-pro {
+    background: var(--corp-dark); 
+    border: none; border-radius: 12px; 
+    padding: 14px; width: 100%; 
+    color: white; font-weight: 700; 
+    margin-top: 10px;
+    transition: all 0.3s;
+    display: flex; justify-content: center; align-items: center; gap: 10px;
+}
+.btn-login-pro:hover { background: var(--corp-primary); box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+.btn-login-pro:disabled { opacity: 0.7; cursor: not-allowed; }
+
+.logo-placeholder {
+    width: 80px; height: 80px; 
+    margin: 0 auto 20px;
+    display: flex; align-items: center; justify-content: center;
+}
+.logo-placeholder img {
+    width: 100%; height: 100%; object-fit: contain;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+}
+
+
+
+/* --- SIDEBAR --- */
+.sidebar {
+    height: 100vh; width: var(--sidebar-w); position: fixed; top: 0; left: 0;
+    background: var(--corp-dark); display: flex; flex-direction: column; z-index: 1040; transition: transform 0.3s;
+}
+.sidebar-brand { padding: 30px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.nav-link { color: #94a3b8; padding: 16px 30px; transition: all 0.3s; border-left: 4px solid transparent; }
+.nav-link.active { color: white; background: rgba(255,255,255,0.05); border-left-color: var(--corp-primary); }
+.main-content { margin-left: var(--sidebar-w); padding: 30px 40px; min-height: 100vh; display: flex; flex-direction: column; }
+
+/* --- ESTILOS AVATARES & GRID --- */
+.avatar-circle { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-right: 12px; }
+.avatar-m { background: var(--male-bg); color: var(--male-col); }
+.avatar-f { background: var(--fem-bg); color: var(--fem-col); }
+
+.stat-card { background: white; border-radius: 20px; padding: 25px; height: 100%; box-shadow: 0 2px 15px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; }
+
+.member-card { background: white; border-radius: 16px; padding: 20px; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.2s; }
+.member-card:hover { border-color: var(--corp-primary); transform: translateY(-3px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1); }
+
+.month-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: #f1f5f9; color: #94a3b8; margin: 1px; display: inline-block; }
+.month-badge.paid { background: #dcfce7; color: #166534; font-weight: bold; }
+
+@media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.active { transform: translateX(0); }
+    .main-content { margin-left: 0; padding: 20px; }
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1030; }
+    .overlay.active { display: block; }
+}
+
+
+/* --- NUEVO ESTILO PARA EL SELECTOR DE FECHA --- */
+.date-pill {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 50px; /* Bordes totalmente redondos */
+    padding: 6px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); /* Sombra suave */
+    transition: all 0.3s ease;
+}
+
+.date-pill:hover {
+    border-color: var(--corp-primary); /* Se pinta azul al pasar el mouse */
+    box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.15);
+    transform: translateY(-1px);
+}
+
+.clean-select {
+    border: none;
+    background-color: transparent;
+    font-weight: 700; /* Letra gordita */
+    color: var(--text-main);
+    cursor: pointer;
+    outline: none;
+    padding-right: 20px; /* Espacio para la flechita */
+    appearance: none; /* Quita la flecha fea por defecto del navegador */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    /* Truco: ponemos nuestra propia flechita pequeña usando una imagen de fondo */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23334155' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right center;
+    background-size: 10px 10px;
+    min-width: 90px; /* Ancho mínimo para que se vea bien */
+}
+
+.clean-select:focus {
+    color: var(--corp-primary);
+}
+
+.separator-line {
+    width: 1px;
+    height: 24px;
+    background-color: #cbd5e1;
+}
+
+
+
+/* --- ESTILO VOUCHER CORPORATIVO (TIPO TICKET) --- */
+.voucher-card {
+    background: white;
+    border-radius: 24px;
+    overflow: hidden;
+    text-align: center;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.voucher-header {
+    background: var(--corp-dark); /* Fondo oscuro elegante */
+    padding: 30px 20px 45px; /* Un poco más de espacio abajo para el ícono */
+    color: white;
+}
+
+.voucher-icon-box {
+    width: 70px;
+    height: 70px;
+    background: #10b981; /* Verde éxito */
+    border: 5px solid white;
+    border-radius: 50%;
+    margin: -35px auto 15px; /* Truco: Margen negativo para que suba y quede en medio */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+    position: relative;
+    z-index: 5;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.voucher-body {
+    padding: 0 25px 25px;
+}
+
+.voucher-dashed-line {
+    border-top: 2px dashed #cbd5e1; /* Línea punteada de corte */
+    margin: 20px 0;
+    width: 100%;
+}
+
+.voucher-img-container {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 5px;
+    background: #f8fafc;
+}
+
+
+
+/* --- ETIQUETAS DE DÍA DE CULTO --- */
+.day-badge {
+    font-size: 0.7rem;          /* Letra pequeñita */
+    padding: 4px 10px;          /* Relleno cómodo */
+    border-radius: 6px;         /* Bordes suaves */
+    font-weight: 700;           /* Letra negrita */
+    text-transform: uppercase;  /* Todo mayúscula */
+    letter-spacing: 0.5px;      /* Espacio entre letras */
+    margin-right: 10px;         /* Separación del texto */
+    display: inline-block;
+    border: 1px solid transparent; /* Borde sutil */
+}
+
+/* Colores específicos por día */
+.day-domingo { background: #fff7ed; color: #c2410c; border-color: #ffedd5; }   /* Naranja suave */
+.day-miercoles { background: #eff6ff; color: #1d4ed8; border-color: #dbeafe; }  /* Azul suave */
+.day-viernes { background: #f0fdf4; color: #15803d; border-color: #dcfce7; }    /* Verde suave */
+.day-sabado { background: #faf5ff; color: #7e22ce; border-color: #f3e8ff; }     /* Morado suave */
+.day-especial { background: #fff1f2; color: #be123c; border-color: #ffe4e6; }   /* Rojo suave */
+.day-default { background: #f1f5f9; color: #64748b; border-color: #e2e8f0; }    /* Gris */
+
+
+/* --- TARJETA DE RESUMEN TOTAL --- */
+.summary-header {
+    background: white;
+    border-radius: 16px;
+    padding: 20px 25px;
+    margin-bottom: 25px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 6px -2px rgba(0,0,0,0.05);
+    border-left: 6px solid #94a3b8; /* Color por defecto */
+}
+
+/* Colores dinámicos */
+.b-diezmos { border-left-color: #3b82f6; }    /* Azul */
+.b-ofrendas { border-left-color: #10b981; }   /* Verde */
+.b-actividades { border-left-color: #f59e0b; } /* Amarillo */
+.b-otros { border-left-color: #6366f1; }      /* Violeta */
+.b-pagos { border-left-color: #ef4444; }      /* Rojo */
+
+.summary-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 5px;
+}
+
+.summary-amount {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #1e293b;
+    line-height: 1;
+}
+
+.summary-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    background: #f8fafc;
+    color: #64748b;
+}
