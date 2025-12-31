@@ -16,16 +16,17 @@ body {
     overflow-x: hidden;
     margin: 0;
 }
+
 .gender-selector-container { 
     display: flex; 
-    gap: 10px; /* Menos separación entre botones */
+    gap: 10px; 
 }
 
 .gender-card {
     flex: 1; 
-    border: 1px solid #e2e8f0; /* Borde más fino */
-    border-radius: 12px; /* Curva más cerrada acorde al tamaño */
-    padding: 8px 5px; /* Relleno reducido significativamente */
+    border: 1px solid #e2e8f0; 
+    border-radius: 12px; 
+    padding: 8px 5px; 
     text-align: center; 
     cursor: pointer; 
     transition: all 0.2s ease; 
@@ -34,7 +35,6 @@ body {
     overflow: hidden;
     opacity: 0.7;
 }
-
 .gender-card:hover { 
     opacity: 1; 
     border-color: #cbd5e1;
@@ -43,7 +43,7 @@ body {
 
 #cardMale.selected {
     border-color: #2563eb;
-    background: #eff6ff; /* Azul muy clarito plano para que se vea limpio */
+    background: #eff6ff; 
     box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2); /* Sombra sutil */
     opacity: 1;
 }
@@ -70,7 +70,7 @@ body {
 }
 
 .gender-card svg { 
-    width: 24px; /* Icono pequeño (antes era 45px) */
+    width: 24px;
     height: 24px; 
     margin-bottom: 2px; 
     fill: #94a3b8; 
@@ -79,7 +79,7 @@ body {
 .gender-card span { 
     display: block; 
     font-weight: 600; 
-    font-size: 0.75rem; /* Letra pequeña (12px aprox) */
+    font-size: 0.75rem; 
     color: #94a3b8; 
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -89,6 +89,7 @@ body {
     opacity: 0; 
     cursor: pointer; 
 }
+
 .search-dropdown-wrapper { position: relative; }
 .search-suggestions {
     position: absolute; top: 100%; left: 0; width: 100%;
@@ -107,14 +108,10 @@ body {
     width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
     font-size: 0.8rem; font-weight: bold;
 }
-
 body.swal2-toast-shown .swal2-container.swal2-top-end { top: 20px !important; right: 20px !important; }
 .colored-toast { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1) !important; }
 .voucher-modal-container { background: #f8fafc; border-radius: 20px; overflow: hidden; }
 .voucher-img-frame { border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; margin-bottom: 15px; }
-
-
-
 #splashScreen {
     position: fixed; inset: 0; background: var(--corp-dark); z-index: 10000;
     display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.8s;
@@ -134,24 +131,22 @@ body.swal2-toast-shown .swal2-container.swal2-top-end { top: 20px !important; ri
 #loginOverlay.active { opacity: 1; visibility: visible; }
 
 .login-card-pro {
-    background: #ffffff; /* Tarjeta Blanca para contraste profesional */
+    background: #ffffff; 
     width: 100%; max-width: 380px;
     padding: 45px 35px; 
     border-radius: 24px; 
     text-align: center;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); /* Sombra de elevación */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); 
     transform: translateY(20px); transition: transform 0.4s;
     position: relative;
     overflow: hidden;
 }
-
 .login-card-pro::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px;
     background: linear-gradient(90deg, var(--corp-primary), var(--corp-accent));
 }
 
 #loginOverlay.active .login-card-pro { transform: translateY(0); }
-
 .login-input-group {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
@@ -207,8 +202,6 @@ body.swal2-toast-shown .swal2-container.swal2-top-end { top: 20px !important; ri
 .nav-link { color: #94a3b8; padding: 16px 30px; transition: all 0.3s; border-left: 4px solid transparent; }
 .nav-link.active { color: white; background: rgba(255,255,255,0.05); border-left-color: var(--corp-primary); }
 .main-content { margin-left: var(--sidebar-w); padding: 30px 40px; min-height: 100vh; display: flex; flex-direction: column; }
-
-/* --- ESTILOS AVATARES & GRID --- */
 .avatar-circle { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-right: 12px; }
 .avatar-m { background: var(--male-bg); color: var(--male-col); }
 .avatar-f { background: var(--fem-bg); color: var(--fem-col); }
@@ -224,9 +217,67 @@ body.swal2-toast-shown .swal2-container.swal2-top-end { top: 20px !important; ri
 @media (max-width: 768px) {
     .sidebar { transform: translateX(-100%); }
     .sidebar.active { transform: translateX(0); }
-    .main-content { margin-left: 0; padding: 20px; }
-    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1030; }
+
+    .main-content { 
+        margin-left: 0; 
+        padding: 15px 15px 80px 15px;
+    }
+
+    .overlay { 
+        display: none; 
+        position: fixed; 
+        inset: 0; 
+        background: rgba(0,0,0,0.5); 
+        z-index: 1030; 
+    }
     .overlay.active { display: block; }
+    .table thead { display: none; } 
+    .table td { 
+        display: block; 
+        width: 100%; 
+        text-align: right; 
+        padding-left: 50%; 
+        position: relative;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0;
+        width: 50%;
+        padding-left: 15px;
+        font-weight: bold;
+        text-align: left;
+        color: #64748b;
+    }
+    .table td:first-child {
+        text-align: left;
+        padding-left: 0;
+        background-color: #f8fafc;
+        font-weight: bold;
+    }
+
+    .login-card-pro {
+        width: 90%; /* Ocupa el 90% del ancho */
+        max-width: none; /* Quita el límite fijo */
+        padding: 30px 20px; /* Menos relleno interno */
+    }
+
+    h1.display-3 { font-size: 2.5rem; } /* Balance más pequeño */
+    
+    .date-pill {
+        width: 100%;
+        justify-content: center;
+        margin-top: 10px;
+    }
+    .btn { width: 100%; margin-bottom: 5px; } /* Botones anchos fáciles de tocar */
+    .d-flex.justify-content-end.mb-4.align-items-center {
+        flex-direction: column-reverse; /* Pone los botones de acción arriba en columna */
+        gap: 10px;
+    }
+    .d-flex.justify-content-end.mb-4.align-items-center button {
+        width: 100%;
+    }
 }
 
 .date-pill {
@@ -242,7 +293,7 @@ body.swal2-toast-shown .swal2-container.swal2-top-end { top: 20px !important; ri
 }
 
 .date-pill:hover {
-    border-color: var(--corp-primary); /* Se pinta azul al pasar el mouse */
+    border-color: var(--corp-primary); 
     box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.15);
     transform: translateY(-1px);
 }
@@ -250,20 +301,19 @@ body.swal2-toast-shown .swal2-container.swal2-top-end { top: 20px !important; ri
 .clean-select {
     border: none;
     background-color: transparent;
-    font-weight: 700; /* Letra gordita */
+    font-weight: 700;
     color: var(--text-main);
     cursor: pointer;
     outline: none;
-    padding-right: 20px; /* Espacio para la flechita */
-    appearance: none; /* Quita la flecha fea por defecto del navegador */
+    padding-right: 20px; 
+    appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    /* Truco: ponemos nuestra propia flechita pequeña usando una imagen de fondo */
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23334155' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
     background-repeat: no-repeat;
     background-position: right center;
     background-size: 10px 10px;
-    min-width: 90px; /* Ancho mínimo para que se vea bien */
+    min-width: 90px; 
 }
 
 .clean-select:focus {
@@ -285,18 +335,18 @@ body.swal2-toast-shown .swal2-container.swal2-top-end { top: 20px !important; ri
 }
 
 .voucher-header {
-    background: var(--corp-dark); /* Fondo oscuro elegante */
-    padding: 30px 20px 45px; /* Un poco más de espacio abajo para el ícono */
+    background: var(--corp-dark);
+    padding: 30px 20px 45px; 
     color: white;
 }
 
 .voucher-icon-box {
     width: 70px;
     height: 70px;
-    background: #10b981; /* Verde éxito */
+    background: #10b981; 
     border: 5px solid white;
     border-radius: 50%;
-    margin: -35px auto 15px; /* Truco: Margen negativo para que suba y quede en medio */
+    margin: -35px auto 15px; 
     display: flex;
     align-items: center;
     justify-content: center;
@@ -312,7 +362,7 @@ body.swal2-toast-shown .swal2-container.swal2-top-end { top: 20px !important; ri
 }
 
 .voucher-dashed-line {
-    border-top: 2px dashed #cbd5e1; /* Línea punteada de corte */
+    border-top: 2px dashed #cbd5e1; 
     margin: 20px 0;
     width: 100%;
 }
@@ -323,7 +373,6 @@ body.swal2-toast-shown .swal2-container.swal2-top-end { top: 20px !important; ri
     padding: 5px;
     background: #f8fafc;
 }
-
 
 .day-badge {
     font-size: 0.7rem;          /* Letra pequeñita */
@@ -337,6 +386,7 @@ body.swal2-toast-shown .swal2-container.swal2-top-end { top: 20px !important; ri
     border: 1px solid transparent; /* Borde sutil */
 }
 
+/* Colores específicos por día */
 .day-domingo { background: #fff7ed; color: #c2410c; border-color: #ffedd5; }   /* Naranja suave */
 .day-miercoles { background: #eff6ff; color: #1d4ed8; border-color: #dbeafe; }  /* Azul suave */
 .day-viernes { background: #f0fdf4; color: #15803d; border-color: #dcfce7; }    /* Verde suave */
@@ -357,7 +407,6 @@ body.swal2-toast-shown .swal2-container.swal2-top-end { top: 20px !important; ri
     border-left: 6px solid #94a3b8; /* Color por defecto */
 }
 
-/* Colores dinámicos */
 .b-diezmos { border-left-color: #3b82f6; }    /* Azul */
 .b-ofrendas { border-left-color: #10b981; }   /* Verde */
 .b-actividades { border-left-color: #f59e0b; } /* Amarillo */
@@ -390,5 +439,4 @@ body.swal2-toast-shown .swal2-container.swal2-top-end { top: 20px !important; ri
     font-size: 1.5rem;
     background: #f8fafc;
     color: #64748b;
-
 }

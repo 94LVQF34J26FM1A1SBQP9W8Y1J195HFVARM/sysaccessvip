@@ -84,41 +84,46 @@
     </nav>
 
     <div class="main-content">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div class="d-flex align-items-center">
-                <button class="btn btn-light d-md-none me-3 shadow-sm" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
-                <h2 class="fw-bold m-0" id="pageTitle">Resumen</h2>
-            </div>
-            
-            <div class="date-pill">
-                <i class="bi bi-calendar-range-fill text-primary fs-5"></i>
-                
-                <select id="monthSelector" class="clean-select" onchange="changeMonth(this.value)">
-                    <option value="-1" class="text-primary fw-bold">Todo el Año</option>
-                    <option value="0">Enero</option>
-                    <option value="1">Febrero</option>
-                    <option value="2">Marzo</option>
-                    <option value="3">Abril</option>
-                    <option value="4">Mayo</option>
-                    <option value="5">Junio</option>
-                    <option value="6">Julio</option>
-                    <option value="7">Agosto</option>
-                    <option value="8">Septiembre</option>
-                    <option value="9">Octubre</option>
-                    <option value="10">Noviembre</option>
-                    <option value="11">Diciembre</option>
-                </select>
 
-                <div class="separator-line"></div>
-
-                <select id="yearSelector" class="clean-select text-muted" onchange="changeYear(this.value)" style="min-width: 60px;">
-                </select>
-                
-                <button class="btn btn-sm btn-light rounded-circle text-primary ms-1 admin-only d-none" onclick="addYear()" title="Añadir año">
-                    <i class="bi bi-plus-lg"></i>
-                </button>
-            </div>
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+    <div class="d-flex align-items-center w-100 justify-content-between justify-content-md-start">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-light d-md-none me-3 shadow-sm" onclick="toggleSidebar()" style="width: auto; margin-bottom: 0;">
+                <i class="bi bi-list"></i>
+            </button>
+            <h2 class="fw-bold m-0" id="pageTitle">Resumen</h2>
         </div>
+    </div>
+    
+    <div class="date-pill w-100 w-md-auto">
+        <i class="bi bi-calendar-range-fill text-primary fs-5"></i>
+        
+        <select id="monthSelector" class="clean-select" onchange="changeMonth(this.value)">
+            <option value="-1" class="text-primary fw-bold">Todo el Año</option>
+            <option value="0">Enero</option>
+            <option value="1">Febrero</option>
+            <option value="2">Marzo</option>
+            <option value="3">Abril</option>
+            <option value="4">Mayo</option>
+            <option value="5">Junio</option>
+            <option value="6">Julio</option>
+            <option value="7">Agosto</option>
+            <option value="8">Septiembre</option>
+            <option value="9">Octubre</option>
+            <option value="10">Noviembre</option>
+            <option value="11">Diciembre</option>
+        </select>
+
+        <div class="separator-line"></div>
+
+        <select id="yearSelector" class="clean-select text-muted" onchange="changeYear(this.value)" style="min-width: 60px;">
+        </select>
+        
+        <button class="btn btn-sm btn-light rounded-circle text-primary ms-1 admin-only d-none" onclick="addYear()" title="Añadir año" style="width: 30px; height: 30px; padding: 0;">
+            <i class="bi bi-plus-lg"></i>
+        </button>
+    </div>
+</div>
 
         <div id="appContainer" class="fade-in" style="flex: 1;"></div>
 
