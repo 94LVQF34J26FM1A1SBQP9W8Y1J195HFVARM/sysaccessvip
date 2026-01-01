@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>SAV</title>
+    <title>RMC</title>
 
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -987,13 +987,73 @@ dom.authForm?.addEventListener('submit', async (ev) => {
     function onVisibleReady() { checkPlayersReady(); }
     function onHiddenReady() { checkPlayersReady(); }
     function checkPlayersReady() { if (!state.visiblePlayer || !state.hiddenPlayer) return; state.playersReady = true; try { const iframeV = state.visiblePlayer.getIframe(); const iframeH = state.hiddenPlayer.getIframe(); if (iframeV) iframeV.setAttribute('allow', 'autoplay; encrypted-media; fullscreen'); if (iframeH) iframeH.setAttribute('allow', 'autoplay; encrypted-media; fullscreen'); } catch (e) {} resizePlayers(); if (state.pendingPlay) { const p = state.pendingPlay; state.pendingPlay = null; loadAndPlayById(p.videoId, p.autoplay); } if (state.queuedTrack) { const { video, queue, queueIndex } = state.queuedTrack; state.queuedTrack = null; playTrack(video, queue, queueIndex); } }
-    function onPlayerStateChange(event) {
+    
+    // === NUEVA FUNCIÓN PARA CORREGIR CONTROLES Y TIEMPO EN SEGUNDO PLANO ===
+    function setupMediaSession() {
+        if (!('mediaSession' in navigator) || !state.currentTrack) return;
+        
+        const player = getActivePlayer();
+        if (!player) return;
+
+        // 1. Definir los metadatos (Título y Artista)
+        const snippet = state.currentTrack.snippet;
+        const title = snippet.title;
+        const artist = snippet.channelTitle;
+        const thumb = snippet.thumbnails?.high?.url || snippet.thumbnails?.default?.url;
+        
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: title,
+            artist: artist,
+            artwork: [{ src: thumb, sizes: '512x512', type: 'image/jpeg' }]
+        });
+
+        // 2. Forzar los botones de Anterior / Siguiente
+        // Es vital definirlos aquí para que el celular no ponga los de "adelantar 10s"
+        navigator.mediaSession.setActionHandler('play', () => { getActivePlayer()?.playVideo(); });
+        navigator.mediaSession.setActionHandler('pause', () => { getActivePlayer()?.pauseVideo(); });
+        navigator.mediaSession.setActionHandler('previoustrack', () => { playPrev(); });
+        navigator.mediaSession.setActionHandler('nexttrack', () => { playNext(); });
+        // Desactivamos explícitamente el "seek" (adelantar/atrasar tiempo)
+        navigator.mediaSession.setActionHandler('seekbackward', null);
+        navigator.mediaSession.setActionHandler('seekforward', null);
+
+        // 3. Sincronizar la barra de tiempo del celular (Lock Screen)
+        try {
+            const duration = player.getDuration();
+            const currentTime = player.getCurrentTime();
+            if (duration > 0 && isFinite(duration)) {
+                navigator.mediaSession.setPositionState({
+                    duration: duration,
+                    playbackRate: 1,
+                    position: currentTime
+                });
+            }
+        } catch(e) { console.warn("Error sync mediaSession time", e); }
+    }
+    
+function onPlayerStateChange(event) {
         const active = getActivePlayer();
         if (event.target !== active) return;
         const s = event.data;
-        if (s === YT.PlayerState.PLAYING) { setPlayIcon(false); state.isPlaying = true; showMiniPlayerAfterPlay(); startProgressInterval(); }
-        else if (s === YT.PlayerState.PAUSED || s === YT.PlayerState.CUED) { setPlayIcon(true); state.isPlaying = false; stopProgressInterval(); }
-        else if (s === YT.PlayerState.ENDED) { stopProgressInterval(); playNext(); }
+        
+        if (s === YT.PlayerState.PLAYING) { 
+            setPlayIcon(false); 
+            state.isPlaying = true; 
+            showMiniPlayerAfterPlay(); 
+            startProgressInterval();
+            
+            // Llama a la nueva función para fijar controles y tiempo
+            setupMediaSession(); 
+        }
+        else if (s === YT.PlayerState.PAUSED || s === YT.PlayerState.CUED) { 
+            setPlayIcon(true); 
+            state.isPlaying = false; 
+            stopProgressInterval(); 
+        }
+        else if (s === YT.PlayerState.ENDED) { 
+            stopProgressInterval(); 
+            playNext(); 
+        }
     }
 
     function getApiKey() { return CONFIG.API_KEYS[state.currentKeyIndex % CONFIG.API_KEYS.length]; }
@@ -1282,32 +1342,25 @@ function initApp() {
         
         dom.fullscreenBtn.addEventListener('click', toggleFullScreen);
 
-        // ==== CONFIGURACIÓN DE SEGUNDO PLANO Y BOTONES ====
-        if ('mediaSession' in navigator) {
-            // Botón PLAY
-            navigator.mediaSession.setActionHandler('play', function() {
-                const active = getActivePlayer();
-                if (active && typeof active.playVideo === 'function') active.playVideo();
-            });
-            // Botón PAUSE
-            navigator.mediaSession.setActionHandler('pause', function() {
-                const active = getActivePlayer();
-                if (active && typeof active.pauseVideo === 'function') active.pauseVideo();
-            });
-            // Botón ANTERIOR
-            navigator.mediaSession.setActionHandler('previoustrack', function() {
-                playPrev();
-            });
-            // Botón SIGUIENTE
-            navigator.mediaSession.setActionHandler('nexttrack', function() {
-                playNext();
-            });
-            // ELIMINAR BOTONES DE "ADELANTAR 10s" PARA QUE SALGAN LOS DE CAMBIO DE CANCIÓN
             try {
                 navigator.mediaSession.setActionHandler('seekbackward', null);
                 navigator.mediaSession.setActionHandler('seekforward', null);
             } catch(e) { console.log('Seek handler not supported'); }
         }
+
+
+// === CORRECCIÓN VISUAL SEGUNDO PLANO ===
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                // Si ocultas la app, paramos la actualización visual (ahorra batería y evita desync)
+                stopProgressInterval();
+            } else {
+                // Al volver, actualizamos la barra inmediatamente y reanudamos
+                updateProgressBar();
+                if (state.isPlaying) startProgressInterval();
+            }
+        });
+
 
         loadFavorites(); loadLibraries(); loadRecents();
         fetchPopularMusic(); fetchPlaylistsByQuery('Top music');
