@@ -1029,50 +1029,56 @@ dom.authForm?.addEventListener('submit', async (ev) => {
     function showPage(pageId) { if(state.currentPage !== pageId) state.lastPage = state.currentPage; dom.pages.forEach(page => page.classList.toggle('active', page.id === `page-${pageId}`)); state.currentPage = pageId; const activePageEl = document.getElementById(`page-${pageId}`); if(activePageEl) activePageEl.scrollTop = 0; if (pageId === 'favorites') renderFavorites(); else if (pageId === 'home') { dom.homeTitle.textContent = 'Inicio'; dom.resultsContainer.innerHTML = ''; toggleHomeSections(true); } else if (pageId === 'recents') renderRecents(); else if (pageId === 'library') renderLibrariesPage(); }
     function toggleSidebar(show) { if (show) { dom.sidebarBackdrop.classList.remove('hidden'); dom.sidebar.classList.remove('-translate-x-full'); } else { dom.sidebarBackdrop.classList.add('hidden'); dom.sidebar.classList.add('-translate-x-full'); } }
     
-    // ==== INICIO DE CAMBIO 3 (JS - updatePlayerUI) ====
-    // Se modifica la función para que también actualice el fondo.
+
+// ==== INICIO DE CAMBIO (Paso 1) ====
     function updatePlayerUI(track) {
         if (!track || !track.snippet) {
-            // Si no hay 'track' (ej. al inicio), limpia el fondo
-            if (dom.playerBgImage) {
-                dom.playerBgImage.style.backgroundImage = 'none';
-            }
-            // Puedes establecer valores predeterminados para la UI si lo deseas
+            if (dom.playerBgImage) dom.playerBgImage.style.backgroundImage = 'none';
             dom.playerTitle.textContent = 'Título de la Canción';
             dom.playerArtist.textContent = 'Nombre del Artista';
             dom.miniPlayerTitle.textContent = 'No hay nada sonando';
             dom.miniPlayerArtist.textContent = '...';
             dom.miniPlayerThumb.src = 'https://placehold.co/40x40/000000/FFFFFF?text=?';
-            return; // Sal de la función
+            return;
         }
         
-        const snippet = track.snippet; // Para no repetir
+        const snippet = track.snippet; 
         const title = snippet.title;
         const artist = snippet.channelTitle;
         const thumb = snippet.thumbnails?.default?.url || 'https://placehold.co/40x40/000000/FFFFFF?text=?';
         
-        // --- INICIO: Nueva lógica para el fondo ---
-        // Busca la mejor miniatura disponible (maxres > high > medium > default)
+        // Imagen de alta calidad para el fondo y la pantalla de bloqueo
         const bgThumb = snippet.thumbnails?.maxres?.url || 
                         snippet.thumbnails?.high?.url || 
                         snippet.thumbnails?.medium?.url || 
                         thumb;
         
         if (dom.playerBgImage) {
-            // Aplica la imagen de fondo al div
             dom.playerBgImage.style.backgroundImage = `url('${bgThumb}')`;
         }
-        // --- FIN: Nueva lógica para el fondo ---
 
-        // UI existente (se mantiene igual)
+        // UI existente
         dom.playerTitle.textContent = title;
         dom.playerArtist.textContent = artist;
         dom.miniPlayerTitle.textContent = title;
         dom.miniPlayerArtist.textContent = artist;
         dom.miniPlayerThumb.src = thumb;
         updateFavoriteIcon();
+
+        // --- CÓDIGO NUEVO PARA SEGUNDO PLANO ---
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: title,
+                artist: artist,
+                album: 'Music Player',
+                artwork: [
+                    { src: thumb, sizes: '96x96', type: 'image/png' },
+                    { src: bgThumb, sizes: '512x512', type: 'image/jpeg' }
+                ]
+            });
+        }
     }
-    // ==== FIN DE CAMBIO 3 (JS - updatePlayerUI) ====
+    // ==== FIN DE CAMBIO (Paso 1) ====
 
     function showFullPlayer() { dom.fullPlayer.classList.remove('translate-y-full'); dom.miniPlayer.classList.add('translate-y-full','opacity-0'); setTimeout(()=> resizePlayers(), 80); }
     function showMiniPlayerAfterPlay() { dom.miniPlayer.classList.remove('translate-y-full','opacity-0'); }
@@ -1163,6 +1169,12 @@ function setPlayIcon(isPaused) {
         }
     }
 
+
+
+
+
+
+    
     function loadFavorites() { const favs = localStorage.getItem(`${CONFIG.STORAGE_PREFIX}favorites`); if (favs) state.favorites = JSON.parse(favs); }
     function saveFavorites() { localStorage.setItem(`${CONFIG.STORAGE_PREFIX}favorites`, JSON.stringify(state.favorites)); }
     function toggleFavorite() { if (!state.currentTrack) return; const videoId = typeof state.currentTrack.id === 'object' ? state.currentTrack.id.videoId : state.currentTrack.id; const favIndex = state.favorites.findIndex(fav => (typeof fav.id === 'object' ? fav.id.videoId : fav.id) === videoId); if (favIndex > -1) { state.favorites.splice(favIndex,1); showToast('Eliminado de Favoritos'); } else { state.favorites.push(state.currentTrack); showToast('Añadido a Favoritos'); } saveFavorites(); updateFavoriteIcon(); if (state.currentPage === 'favorites') renderFavorites(); }
@@ -1252,6 +1264,28 @@ function setPlayIcon(isPaused) {
         
         // Listener para pantalla completa
         dom.fullscreenBtn.addEventListener('click', toggleFullScreen);
+
+// ==== INICIO DE CAMBIO (Paso 2) - Agregar esto aquí ====
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.setActionHandler('play', function() {
+                // Cuando das play desde la notificación
+                const active = getActivePlayer();
+                if (active && typeof active.playVideo === 'function') active.playVideo();
+            });
+            navigator.mediaSession.setActionHandler('pause', function() {
+                // Cuando das pausa desde la notificación
+                const active = getActivePlayer();
+                if (active && typeof active.pauseVideo === 'function') active.pauseVideo();
+            });
+            navigator.mediaSession.setActionHandler('previoustrack', function() {
+                playPrev(); // Tu función existente
+            });
+            navigator.mediaSession.setActionHandler('nexttrack', function() {
+                playNext(); // Tu función existente
+            });
+        }
+        // ==== FIN DE CAMBIO (Paso 2) ====
+
 
         loadFavorites(); loadLibraries(); loadRecents();
         fetchPopularMusic(); fetchPlaylistsByQuery('Top music');
@@ -1382,4 +1416,3 @@ onAuthStateChanged(auth, async (user) => {
     </script>
 </body>
 </html>
-
