@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>RCM 1</title>
+    <title>m2</title>
 
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -988,8 +988,7 @@ dom.authForm?.addEventListener('submit', async (ev) => {
     function onHiddenReady() { checkPlayersReady(); }
     function checkPlayersReady() { if (!state.visiblePlayer || !state.hiddenPlayer) return; state.playersReady = true; try { const iframeV = state.visiblePlayer.getIframe(); const iframeH = state.hiddenPlayer.getIframe(); if (iframeV) iframeV.setAttribute('allow', 'autoplay; encrypted-media; fullscreen'); if (iframeH) iframeH.setAttribute('allow', 'autoplay; encrypted-media; fullscreen'); } catch (e) {} resizePlayers(); if (state.pendingPlay) { const p = state.pendingPlay; state.pendingPlay = null; loadAndPlayById(p.videoId, p.autoplay); } if (state.queuedTrack) { const { video, queue, queueIndex } = state.queuedTrack; state.queuedTrack = null; playTrack(video, queue, queueIndex); } }
    
-   
-   // === NUEVA FUNCIÓN PARA CORREGIR CONTROLES Y TIEMPO EN SEGUNDO PLANO ===
+  // === REEMPLAZAR ESTA FUNCIÓN COMPLETA ===
     function setupMediaSession() {
         if (!('mediaSession' in navigator) || !state.currentTrack) return;
         
@@ -1008,31 +1007,41 @@ dom.authForm?.addEventListener('submit', async (ev) => {
             artwork: [{ src: thumb, sizes: '512x512', type: 'image/jpeg' }]
         });
 
-        // 2. Forzar los botones de Anterior / Siguiente
-        // Es vital definirlos aquí para que el celular no ponga los de "adelantar 10s"
+        // 2. Botones de control del celular
         navigator.mediaSession.setActionHandler('play', () => { getActivePlayer()?.playVideo(); });
         navigator.mediaSession.setActionHandler('pause', () => { getActivePlayer()?.pauseVideo(); });
         navigator.mediaSession.setActionHandler('previoustrack', () => { playPrev(); });
         navigator.mediaSession.setActionHandler('nexttrack', () => { playNext(); });
-        // Desactivamos explícitamente el "seek" (adelantar/atrasar tiempo)
-        navigator.mediaSession.setActionHandler('seekbackward', null);
-        navigator.mediaSession.setActionHandler('seekforward', null);
+        
+        // 3. Importante: Permitir que el usuario mueva la barra desde el celular
+        navigator.mediaSession.setActionHandler('seekto', (details) => {
+             if (details.seekTime && player.seekTo) player.seekTo(details.seekTime, true);
+        });
 
-        // 3. Sincronizar la barra de tiempo del celular (Lock Screen)
+        // 4. Intentar sincronizar el tiempo inmediatamente
+        updateMediaSessionPosition();
+    }
+
+    // === AGREGAR ESTA NUEVA FUNCIÓN JUSTO DEBAJO ===
+    function updateMediaSessionPosition() {
+        if (!('mediaSession' in navigator)) return;
+        const player = getActivePlayer();
         try {
             const duration = player.getDuration();
             const currentTime = player.getCurrentTime();
+            // Solo enviamos datos al sistema si la duración es válida (mayor a 0)
             if (duration > 0 && isFinite(duration)) {
                 navigator.mediaSession.setPositionState({
                     duration: duration,
-                    playbackRate: 1,
+                    playbackRate: state.isPlaying ? 1.0 : 0.0,
                     position: currentTime
                 });
             }
-        } catch(e) { console.warn("Error sync mediaSession time", e); }
-    }
-   
-function onPlayerStateChange(event) {
+        } catch(e) { /* Errores silenciosos si el player no está listo */ }
+    } 
+
+// === REEMPLAZAR ESTA FUNCIÓN COMPLETA ===
+    function onPlayerStateChange(event) {
         const active = getActivePlayer();
         if (event.target !== active) return;
         const s = event.data;
@@ -1043,13 +1052,16 @@ function onPlayerStateChange(event) {
             showMiniPlayerAfterPlay(); 
             startProgressInterval();
             
-            // Llama a la nueva función para fijar controles y tiempo
+            // Configurar notificaciones y tiempo
             setupMediaSession(); 
         }
         else if (s === YT.PlayerState.PAUSED || s === YT.PlayerState.CUED) { 
             setPlayIcon(true); 
             state.isPlaying = false; 
             stopProgressInterval(); 
+            
+            // Actualizar estado a "Pausado" en el sistema
+            updateMediaSessionPosition();
         }
         else if (s === YT.PlayerState.ENDED) { 
             stopProgressInterval(); 
@@ -1063,18 +1075,29 @@ function onPlayerStateChange(event) {
     async function fetchWithRetry(url, retries = 3) { if (retries === 0) throw new Error("API retries exhausted."); url.searchParams.set('key', getApiKey()); try { const res = await fetch(url); if (!res.ok) { const errorData = await res.json().catch(()=>({error:{message:'unknown', code: res.status}})); const errorCode = errorData.error?.code; if (errorCode === 403 || errorCode === 400) { rotateApiKey(); url.searchParams.set('key', getApiKey()); return fetchWithRetry(url, retries - 1); } else { throw new Error(errorData.error?.message || res.statusText); } } return await res.json(); } catch (err) { console.error("fetch error:", err); return fetchWithRetry(url, retries - 1); } }
     
     function formatTime(seconds) { const min = Math.floor(seconds / 60); const sec = Math.floor(seconds % 60); return `${min}:${sec < 10 ? '0' : ''}${sec}`; }
+// === REEMPLAZAR ESTA FUNCIÓN COMPLETA ===
     function updateProgressBar() {
         if (state.isSeeking || !state.playersReady) return;
         const player = getActivePlayer();
         try {
-            const currentTime = player.getCurrentTime(); const duration = player.getDuration();
+            const currentTime = player.getCurrentTime(); 
+            const duration = player.getDuration();
+            
             if (isFinite(currentTime) && isFinite(duration) && duration > 0) {
+                // 1. Actualizar TU página web (Barra HTML)
                 dom.playerCurrentTime.textContent = formatTime(currentTime);
                 dom.playerTotalDuration.textContent = formatTime(duration);
                 dom.playerProgressBar.max = duration;
                 dom.playerProgressBar.value = currentTime;
                 const progressPercent = (currentTime / duration) * 100;
                 dom.playerProgressBar.style.setProperty('--progress-percent', `${progressPercent}%`);
+
+                // 2. NUEVO: Sincronizar el sistema (Segundo plano)
+                // Si la duración acaba de cargar o cada 2 segundos aprox, forzamos sync
+                // Esto arregla el bug de que aparezca "0:00" en el bloqueo
+                if (Math.abs(currentTime % 2) < 0.3) { 
+                    updateMediaSessionPosition();
+                }
             }
         } catch (e) {}
     }
@@ -1358,7 +1381,7 @@ function setPlayIcon(isPaused) {
         loadFavorites(); loadLibraries(); loadRecents();
         fetchPopularMusic(); fetchPlaylistsByQuery('Top music');
     }
-    
+
 // ---- Nuevo onAuthStateChanged: valida userMeta y muestra notificación con contacto ----
 onAuthStateChanged(auth, async (user) => {
   authVerifying = false;
