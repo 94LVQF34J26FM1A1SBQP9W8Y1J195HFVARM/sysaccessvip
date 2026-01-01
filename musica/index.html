@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Music Player</title>
+    <title>Mus</title>
 
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -1022,23 +1022,42 @@ dom.authForm?.addEventListener('submit', async (ev) => {
         updateMediaSessionPosition();
     }
 
-    // === AGREGAR ESTA NUEVA FUNCIÓN JUSTO DEBAJO ===
+// === COPIA Y PEGA ESTO REEMPLAZANDO LA ANTERIOR ===
     function updateMediaSessionPosition() {
         if (!('mediaSession' in navigator)) return;
+        
         const player = getActivePlayer();
+        if (!player || !player.getDuration) return;
+
         try {
             const duration = player.getDuration();
             const currentTime = player.getCurrentTime();
-            // Solo enviamos datos al sistema si la duración es válida (mayor a 0)
+            
+            // Verificamos si realmente está sonando preguntando directo a YouTube
+            // (A veces state.isPlaying falla, esto es más seguro)
+            const isPlayingReal = (player.getPlayerState() === YT.PlayerState.PLAYING);
+
+            // VALIDACIÓN DE SEGURIDAD (Esto arregla tu foto):
+            // Si la duración es válida...
             if (duration > 0 && isFinite(duration)) {
+                
+                // TRUCO: Nunca dejar que el tiempo actual pase a la duración.
+                // Si currentTime es 201 y duration es 200, forzamos que sea 200.
+                const safePosition = Math.min(currentTime, duration);
+
+                // Si safePosition es negativo (error raro), lo ponemos en 0
+                const finalPosition = Math.max(0, safePosition);
+
                 navigator.mediaSession.setPositionState({
                     duration: duration,
-                    playbackRate: state.isPlaying ? 1.0 : 0.0,
-                    position: currentTime
+                    playbackRate: isPlayingReal ? 1.0 : 0.0,
+                    position: finalPosition
                 });
             }
-        } catch(e) { /* Errores silenciosos si el player no está listo */ }
-    } 
+        } catch(e) { 
+            // Ignoramos errores silenciosos para que no se trabe la app
+        }
+    }
 
 // === REEMPLAZAR ESTA FUNCIÓN COMPLETA ===
     function onPlayerStateChange(event) {
@@ -1076,6 +1095,7 @@ dom.authForm?.addEventListener('submit', async (ev) => {
     
     function formatTime(seconds) { const min = Math.floor(seconds / 60); const sec = Math.floor(seconds % 60); return `${min}:${sec < 10 ? '0' : ''}${sec}`; }
 // === REEMPLAZAR ESTA FUNCIÓN COMPLETA ===
+// === REEMPLAZA TU FUNCIÓN updateProgressBar POR ESTA ===
     function updateProgressBar() {
         if (state.isSeeking || !state.playersReady) return;
         const player = getActivePlayer();
@@ -1084,20 +1104,19 @@ dom.authForm?.addEventListener('submit', async (ev) => {
             const duration = player.getDuration();
             
             if (isFinite(currentTime) && isFinite(duration) && duration > 0) {
-                // 1. Actualizar TU página web (Barra HTML)
+                // 1. Actualizar TU página web
                 dom.playerCurrentTime.textContent = formatTime(currentTime);
                 dom.playerTotalDuration.textContent = formatTime(duration);
                 dom.playerProgressBar.max = duration;
                 dom.playerProgressBar.value = currentTime;
+                
                 const progressPercent = (currentTime / duration) * 100;
                 dom.playerProgressBar.style.setProperty('--progress-percent', `${progressPercent}%`);
 
-                // 2. NUEVO: Sincronizar el sistema (Segundo plano)
-                // Si la duración acaba de cargar o cada 2 segundos aprox, forzamos sync
-                // Esto arregla el bug de que aparezca "0:00" en el bloqueo
-                if (Math.abs(currentTime % 2) < 0.3) { 
-                    updateMediaSessionPosition();
-                }
+                // 2. ACTUALIZAR SEGUNDO PLANO (ANDROID)
+                // Lo llamamos siempre que actualizamos la barra visual.
+                // La función de arriba ya tiene protecciones para no saturar.
+                updateMediaSessionPosition();
             }
         } catch (e) {}
     }
@@ -1506,4 +1525,3 @@ onAuthStateChanged(auth, async (user) => {
     </script>
 </body>
 </html>
-
