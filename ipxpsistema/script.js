@@ -591,37 +591,46 @@ async function loadCategoriasSelect() {
 
 
 window.startEdit = async (type, encodedItem) => {
-    // 1. Abrimos el formulario visualmente para que se configuren los campos (ocultos/visibles)
-    await window.openForm(type);
-
-    // 2. Decodificamos los datos
-    const item = JSON.parse(decodeURIComponent(encodedItem));
-
-    // 3. Llenamos los datos en el formulario
-    EDIT_MODE = true;
-    document.getElementById('edit_id').value = item.id;
-    document.getElementById('edit_voucher_url').value = item.voucherUrl || '';
-    
-    document.getElementById('f_fecha').value = item.fecha;
-    document.getElementById('f_monto').value = item.monto;
-    document.getElementById('f_nombre').value = item.nombre;
-
-    // 4. Llenamos campos específicos según el tipo
-    if(type === 'diezmos') {
-        document.getElementById('f_mes_diezmo').value = item.mesCorrespondiente;
-        selectGender(item.genero || 'M');
-    } else if(type === 'ofrendas') {
-        document.getElementById('f_dia_ofrenda').value = item.diaServicio;
-    } else if(type === 'pagos') {
-        document.getElementById('f_tipo_pago').value = item.categoriaGasto;
+    // 1. CORRECCIÓN: Si hay una ventana de "Ver" (SweetAlert) abierta, la cerramos primero
+    if (Swal.isVisible()) {
+        Swal.close(); 
     }
 
-    // 5. Cambiamos el botón para que diga "Actualizar"
-    const btn = document.getElementById('btnGuardar');
-    btn.textContent = "Actualizar";
-    if(document.getElementById('modalTitle')) document.getElementById('modalTitle').textContent = "Editar Registro";
-}
+    // Pequeña pausa de 200ms para dar tiempo a que se cierre la otra ventana
+    // y no se vea feo el cambio visual
+    setTimeout(async () => {
+        // 2. Abrimos el formulario visualmente
+        await window.openForm(type);
 
+        // 3. Decodificamos los datos
+        const item = JSON.parse(decodeURIComponent(encodedItem));
+
+        // 4. Llenamos los datos en el formulario
+        EDIT_MODE = true;
+        document.getElementById('edit_id').value = item.id;
+        document.getElementById('edit_voucher_url').value = item.voucherUrl || '';
+        
+        document.getElementById('f_fecha').value = item.fecha;
+        document.getElementById('f_monto').value = item.monto;
+        document.getElementById('f_nombre').value = item.nombre;
+
+        // 5. Llenamos campos específicos
+        if(type === 'diezmos') {
+            document.getElementById('f_mes_diezmo').value = item.mesCorrespondiente;
+            selectGender(item.genero || 'M');
+        } else if(type === 'ofrendas') {
+            document.getElementById('f_dia_ofrenda').value = item.diaServicio;
+        } else if(type === 'pagos') {
+            document.getElementById('f_tipo_pago').value = item.categoriaGasto;
+        }
+
+        // 6. Cambiamos el botón para que diga "Actualizar"
+        const btn = document.getElementById('btnGuardar');
+        btn.textContent = "Actualizar";
+        if(document.getElementById('modalTitle')) document.getElementById('modalTitle').textContent = "Editar Registro";
+        
+    }, 200); // Fin del timeout
+}
 
 
 window.manageCategories = async () => {
