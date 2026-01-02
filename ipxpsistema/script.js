@@ -249,7 +249,7 @@ const ing = totalDiezmos + totalOfrendas;
         }
         // ------------------------------------
 
-
+const totalFinal = (ing - gas) + saldoInicial;
 
 // Renderizamos
         container.innerHTML = `
