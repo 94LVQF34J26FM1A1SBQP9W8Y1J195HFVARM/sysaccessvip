@@ -249,11 +249,17 @@ const ing = totalDiezmos + totalOfrendas;
         }
         // ------------------------------------
 
-        // Sumamos el saldo inicial al total
-        const totalFinal = (ing - gas) + saldoInicial;
-        
-        // Renderizamos
+
+
+// Renderizamos
         container.innerHTML = `
+            ${IS_ADMIN ? `
+            <div class="d-flex justify-content-end mb-3">
+                <button onclick="downloadPDF()" class="btn btn-success shadow-sm rounded-pill px-4">
+                    <i class="bi bi-file-earmark-pdf-fill me-2"></i> Descargar Reporte del Mes
+                </button>
+            </div>` : ''}
+
             <div class="row g-4 mb-4">
                 <div class="col-lg-8">
                     <div class="card bg-dark text-white border-0 shadow rounded-4 p-4 h-100" style="background: linear-gradient(135deg, #0f172a 0%, #334155 100%);">
@@ -778,5 +784,169 @@ window.editFromTable = (name, encodedList) => {
         // Si hay varios, abrimos la lista y avisamos
         showMemberDetail(name, encodedList);
         Toast.fire({ icon: 'info', title: 'Elige cuál registro editar' });
+    }
+}
+
+// --- FUNCIÓN PARA GENERAR PDF ---
+window.downloadPDF = async () => {
+    // 1. Validaciones iniciales
+    if (!IS_ADMIN) return Toast.fire({ icon: 'error', title: 'Acceso denegado' });
+    
+    // Preguntar confirmación para que se vea profesional
+    const { isConfirmed } = await Swal.fire({
+        title: 'Generar Reporte',
+        text: "¿Deseas descargar el PDF con los datos del periodo seleccionado?",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, descargar',
+        confirmButtonColor: '#10b981'
+    });
+    if (!isConfirmed) return;
+
+    Swal.showLoading();
+
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Configuración de fechas y textos
+        const monthsNames = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+        const periodoTexto = CURRENT_MONTH === -1 ? `Anual ${CURRENT_YEAR}` : `${monthsNames[CURRENT_MONTH]} ${CURRENT_YEAR}`;
+        
+        // 2. Obtener datos de Firebase
+        const [snapD, snapO, snapP] = await Promise.all([
+            get(ref(db, `transacciones/${CURRENT_YEAR}/diezmos`)),
+            get(ref(db, `transacciones/${CURRENT_YEAR}/ofrendas`)),
+            get(ref(db, `transacciones/${CURRENT_YEAR}/pagos`))
+        ]);
+
+        // Convertir objetos a listas y filtrar por mes
+        const processList = (snap) => {
+            let list = Object.values(snap.val() || {});
+            // Usamos tu función filterByMonth existente
+            return filterByMonth(list).sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
+        };
+
+        const listDiezmos = processList(snapD);
+        const listOfrendas = processList(snapO);
+        const listPagos = processList(snapP);
+
+        // Calcular totales
+        const sum = (l) => l.reduce((acc, i) => acc + parseFloat(i.monto), 0);
+        const totalD = sum(listDiezmos);
+        const totalO = sum(listOfrendas);
+        const totalP = sum(listPagos);
+        const granTotal = (totalD + totalO) - totalP;
+
+        // --- DISEÑO DEL PDF ---
+        
+        // Encabezado
+        doc.setFontSize(18);
+        doc.setTextColor(15, 23, 42); // Color oscuro
+        doc.text("Reporte Financiero - Camino de Santidad", 14, 20);
+        
+        doc.setFontSize(11);
+        doc.setTextColor(100);
+        doc.text(`Periodo: ${periodoTexto}`, 14, 28);
+        doc.text(`Generado el: ${new Date().toLocaleDateString()}`, 14, 34);
+
+        let finalY = 40; // Posición vertical donde terminará cada tabla
+
+        // TABLA 1: DIEZMOS
+        if (listDiezmos.length > 0) {
+            doc.text(`Detalle de Diezmos (S/. ${totalD.toFixed(2)})`, 14, finalY + 10);
+            doc.autoTable({
+                startY: finalY + 15,
+                head: [['Fecha', 'Hermano', 'Mes Pagado', 'Monto', 'Voucher']],
+                body: listDiezmos.map(i => [
+                    i.fecha, 
+                    i.nombre, 
+                    monthsNames[i.mesCorrespondiente] || 'Extra', 
+                    `S/. ${parseFloat(i.monto).toFixed(2)}`,
+                    i.voucherUrl ? 'VER FOTO' : '-' // Texto clickable (ver abajo)
+                ]),
+                theme: 'grid',
+                headStyles: { fillColor: [59, 130, 246] }, // Azul
+                // Hacemos que la columna Voucher sea un link
+                didDrawCell: (data) => {
+                    if (data.column.index === 4 && data.cell.raw === 'VER FOTO') {
+                        const rowIdx = data.row.index;
+                        const url = listDiezmos[rowIdx].voucherUrl;
+                        if(url) doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, { url: url });
+                    }
+                }
+            });
+            finalY = doc.lastAutoTable.finalY;
+        }
+
+        // TABLA 2: OFRENDAS
+        if (listOfrendas.length > 0) {
+            doc.text(`Detalle de Ofrendas (S/. ${totalO.toFixed(2)})`, 14, finalY + 10);
+            doc.autoTable({
+                startY: finalY + 15,
+                head: [['Fecha', 'Día Servicio', 'Detalle', 'Monto']],
+                body: listOfrendas.map(i => [
+                    i.fecha, 
+                    i.diaServicio || '-', 
+                    i.nombre, 
+                    `S/. ${parseFloat(i.monto).toFixed(2)}`
+                ]),
+                theme: 'grid',
+                headStyles: { fillColor: [16, 185, 129] } // Verde
+            });
+            finalY = doc.lastAutoTable.finalY;
+        }
+
+        // TABLA 3: GASTOS
+        if (listPagos.length > 0) {
+            doc.text(`Detalle de Gastos (S/. ${totalP.toFixed(2)})`, 14, finalY + 10);
+            doc.autoTable({
+                startY: finalY + 15,
+                head: [['Fecha', 'Categoría', 'Descripción', 'Monto', 'Voucher']],
+                body: listPagos.map(i => [
+                    i.fecha, 
+                    i.categoriaGasto || 'General', 
+                    i.nombre, 
+                    `S/. ${parseFloat(i.monto).toFixed(2)}`,
+                    i.voucherUrl ? 'VER FOTO' : '-'
+                ]),
+                theme: 'grid',
+                headStyles: { fillColor: [239, 68, 68] }, // Rojo
+                didDrawCell: (data) => {
+                    if (data.column.index === 4 && data.cell.raw === 'VER FOTO') {
+                        const rowIdx = data.row.index;
+                        const url = listPagos[rowIdx].voucherUrl;
+                        if(url) doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, { url: url });
+                    }
+                }
+            });
+            finalY = doc.lastAutoTable.finalY;
+        }
+
+        // RESUMEN FINAL
+        doc.setFillColor(241, 245, 249);
+        doc.rect(14, finalY + 10, 100, 40, 'F');
+        doc.setFontSize(12);
+        doc.setTextColor(0);
+        
+        doc.text("RESUMEN DEL PERIODO", 20, finalY + 20);
+        doc.setFontSize(10);
+        doc.text(`Total Ingresos:   S/. ${(totalD + totalO).toFixed(2)}`, 20, finalY + 30);
+        doc.text(`Total Egresos:    S/. ${totalP.toFixed(2)}`, 20, finalY + 38);
+        
+        doc.setFontSize(14);
+        doc.setTextColor(granTotal >= 0 ? 22 : 220, granTotal >= 0 ? 101 : 38, granTotal >= 0 ? 52 : 38); // Verde o Rojo
+        doc.text(`Balance: S/. ${granTotal.toFixed(2)}`, 20, finalY + 48);
+
+        // Guardar archivo
+        doc.save(`Reporte_${periodoTexto.replace(/\s+/g, '_')}.pdf`);
+        
+        Swal.close();
+        Toast.fire({ icon: 'success', title: 'PDF Descargado' });
+
+    } catch (error) {
+        console.error(error);
+        Swal.close();
+        Toast.fire({ icon: 'error', title: 'Error al generar PDF' });
     }
 }
