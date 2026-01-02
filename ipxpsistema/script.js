@@ -410,13 +410,21 @@ window.renderList = (type) => {
                 const paidMonths = [...new Set(g.txs.filter(t=>t.mesCorrespondiente!==undefined).map(t=>t.mesCorrespondiente))].sort((a,b)=>a-b);
                 const monthBadges = paidMonths.map(m => `<span class="badge bg-light text-secondary border fw-normal me-1">${months[m]}</span>`).join('');
 
-                tbody.innerHTML += `
-                <tr>
-                    <td><div class="d-flex align-items-center"><div class="avatar-circle ${avatarClass}"><i class="bi bi-person"></i></div><span class="fw-bold">${name}</span></div></td>
-                    <td>${monthBadges}</td>
-                    <td class="text-end fw-bold text-primary">S/. ${g.total.toFixed(2)}</td>
-                    <td class="text-center"><button class="btn btn-sm btn-light border rounded-pill px-3" onclick="showMemberDetail('${name}', '${safeData}')">Ver</button></td>
-                </tr>`;
+
+// --- PEGA ESTE CÓDIGO NUEVO EN SU LUGAR ---
+tbody.innerHTML += `
+<tr>
+    <td><div class="d-flex align-items-center"><div class="avatar-circle ${avatarClass}"><i class="bi bi-person"></i></div><span class="fw-bold">${name}</span></div></td>
+    <td>${monthBadges}</td>
+    <td class="text-end fw-bold text-primary">S/. ${g.total.toFixed(2)}</td>
+    <td class="text-center">
+        <button class="btn btn-sm btn-light text-primary border me-1" onclick="editFromTable('${name}', '${safeData}')">
+            <i class="bi bi-pencil-square"></i>
+        </button>
+        <button class="btn btn-sm btn-light border rounded-pill px-3" onclick="showMemberDetail('${name}', '${safeData}')">Ver</button>
+    </td>
+</tr>`;
+
             });
 
         } else {
@@ -751,3 +759,15 @@ onValue(ref(db, 'configuracion/anos'), s => {
 
 
 
+window.editFromTable = (name, encodedList) => {
+    const list = JSON.parse(decodeURIComponent(encodedList));
+    
+    if(list.length === 1) {
+        // Si solo hay uno, lo editamos directo
+        startEdit('diezmos', encodeURIComponent(JSON.stringify(list[0])));
+    } else {
+        // Si hay varios, abrimos la lista y avisamos
+        showMemberDetail(name, encodedList);
+        Toast.fire({ icon: 'info', title: 'Elige cuál registro editar' });
+    }
+}
